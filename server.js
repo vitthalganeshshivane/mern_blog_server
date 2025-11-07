@@ -69,6 +69,18 @@ const formatDatatoSend = (user) => {
   };
 };
 
+const generateUsername = async (email) => {
+  let username = email.split("@")[0];
+
+  let exists = await User.exists({ "personal_info.username": username });
+
+  if (exists) {
+    username += nanoid().substring(0, 3);
+  }
+
+  return username;
+};
+
 server.listen(PORT, () => {
   console.log(`listening on port -> ${PORT}`);
 });
