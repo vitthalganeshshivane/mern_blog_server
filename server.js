@@ -18,6 +18,27 @@ import jwt from "jsonwebtoken";
 import { nanoid } from "nanoid";
 import User from "./Schema/User.js";
 
+const server = express();
+let PORT = 3000;
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccountKey),
+});
+
+server.use(express.json());
+server.use(cors());
+
+mongoose
+  .connect(process.env.MONGO_URI, { autoIndex: true })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+const s3 = new aws.S3({
+  region: "ap-south-1",
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+});
+
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/;
 
@@ -38,23 +59,16 @@ const verifyJWT = (req, res, next) => {
   });
 };
 
-const server = express();
-let PORT = 3000;
+const formatDatatoSend = (user) => {
+  const access_token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+  return {
+    access_token,
+    profile_img: user.personal_info.profile_img,
+    username: user.personal_info.username,
+    fullname: user.personal_info.fullname,
+  };
+};
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccountKey),
-});
-
-server.use(express.json());
-server.use(cors());
-
-mongoose
-  .connect(process.env.MONGO_URI, { autoIndex: true })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
-
-const s3 = new aws.S3({
-  region: "ap-south-1",
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+server.listen(PORT, () => {
+  console.log(`listening on port -> ${PORT}`);
 });
