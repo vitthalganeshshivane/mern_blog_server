@@ -168,6 +168,59 @@ server.post("/signin", (req, res) => {
     });
 });
 
+server.post("/google-auth", async (req, res) => {
+  const { access_token } = req.body;
+
+  try {
+    // Verify Firebase ID token
+    const decodedUser = await getAuth().verifyIdToken(access_token);
+
+    // Extract user details from verified token
+    const { email, name, picture } = decodedUser;
+    const largePicture = picture?.replace("s96-c", "s384-c") || null;
+
+    // Find existing user by email
+    let user = await User.findOne({ "personal_info.email": email })
+      .select(
+        "personal_info.fullname personal_info.username personal_info.profile_img google_auth"
+      )
+      .exec();
+
+    // If user exists
+    if (user) {
+      // If user didn't sign up with Google, reject login
+      if (!user.google_auth) {
+        return res.status(403).json({
+          error:
+            "This email was signed up without google. Please login with password to access the account",
+        });
+      }
+    } else {
+      // Create new user with google_auth true
+      const username = await generateUsername(email);
+
+      user = new User({
+        personal_info: {
+          fullname: name,
+          email,
+          username,
+        },
+        google_auth: true,
+      });
+
+      await user.save();
+    }
+
+    return res.status(200).json(formatDatatoSend(user));
+  } catch (err) {
+    console.error("Google auth error:", err);
+    return res.status(500).json({
+      error:
+        "Failed to authenticate you with google. Try with some other google account",
+    });
+  }
+});
+
 server.listen(PORT, () => {
   console.log(`listening on port -> ${PORT}`);
 });
