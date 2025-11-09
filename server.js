@@ -435,6 +435,17 @@ server.post("/latest-blogs", (req, res) => {
     });
 });
 
+server.post("/all-latest-blogs-count", (req, res) => {
+  Blog.countDocuments({ draft: false })
+    .then((count) => {
+      return res.status(200).json({ totalDocs: count });
+    })
+    .catch((err) => {
+      console.log(err.message);
+      return res.status(500).json({ error: err.message });
+    });
+});
+
 server.listen(PORT, () => {
   console.log(`listening on port -> ${PORT}`);
 });
