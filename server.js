@@ -548,6 +548,21 @@ server.post("/search-users", (req, res) => {
     });
 });
 
+server.post("/get-profile", (req, res) => {
+  let { username } = req.body;
+
+  console.log(username);
+
+  User.findOne({ "personal_info.username": username })
+    .select("-personal_info.password -google_auth -updateAt -blogs")
+    .then((user) => {
+      return res.status(200).json(user);
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: err.message });
+    });
+});
+
 server.listen(PORT, () => {
   console.log(`listening on port -> ${PORT}`);
 });
