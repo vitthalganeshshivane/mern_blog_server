@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 import cors from "cors";
 import admin from "firebase-admin";
 import fs from "fs";
+import Blog from "./Schema/Blog.js";
+import Notification from "./Schema/Notification.js";
+import Comment from "./Schema/Comment.js";
 
 const serviceAccountKey = JSON.parse(
   fs.readFileSync(
